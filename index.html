@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Operations</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0f0e;--sf:#161814;--s2:#1e201c;--b1:#2a2d27;--b2:#363a32;--acc:#c8e840;--acc2:#9ab82e;--tx:#e8ead4;--t2:#9a9d8a;--t3:#5a5d4e;--red:#e85040;--grn:#40c870;--yel:#e8c040;--blu:#4090e8;--r:10px;--rs:6px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden;}
+
+/* ── LOGIN SCREEN ── */
+#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:var(--sf);border:1px solid var(--b2);border-radius:16px;width:100%;max-width:380px;padding:40px 36px;animation:su .25s ease;}
+.login-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;}
+.login-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--acc);letter-spacing:.14em;text-transform:uppercase;margin-bottom:32px;}
+.login-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;display:block;}
+.login-input{width:100%;background:var(--bg);border:1px solid var(--b1);border-radius:var(--rs);padding:11px 14px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;margin-bottom:16px;}
+.login-input:focus{border-color:var(--acc);}
+.login-input.err{border-color:var(--red);}
+.login-btn{width:100%;padding:12px;background:var(--acc);color:#0e0f0e;border:none;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;margin-bottom:12px;}
+.login-btn:hover{background:var(--acc2);}
+.login-err{font-size:12px;color:var(--red);text-align:center;min-height:18px;margin-top:-8px;margin-bottom:8px;}
+.login-hint{font-size:11px;color:var(--t3);text-align:center;}
+
+/* ── CHANGE PASSWORD MODAL ── */
+#chpwModal{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+#chpwModal.open{display:flex;}
+.chpw-box{background:var(--sf);border:1px solid var(--b2);border-radius:12px;width:100%;max-width:400px;animation:su .2s ease;}
+.chpw-hdr{padding:20px 24px 16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;}
+.chpw-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;}
+.chpw-body{padding:20px 24px;}
+.chpw-ftr{padding:14px 24px;border-top:1px solid var(--b1);display:flex;justify-content:flex-end;gap:8px;}
+
+/* ── MAIN APP ── */
+#app{display:none;}
+#app.visible{display:flex;min-height:100vh;}
+.sidebar{width:220px;min-height:100vh;background:var(--sf);border-right:1px solid var(--b1);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;transition:transform .3s;}
+.main{margin-left:220px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}}
+.logo{padding:24px 20px 20px;border-bottom:1px solid var(--b1);}
+.logo-t{font-family:'Playfair Display',serif;font-size:17px;line-height:1.3;}
+.logo-s{font-family:'DM Mono',monospace;font-size:10px;color:var(--acc);letter-spacing:.12em;text-transform:uppercase;margin-top:3px;}
+.nav{padding:16px 10px;flex:1;}
+.nav-sec{margin-bottom:18px;}
+.nav-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--t3);padding:0 10px;margin-bottom:5px;}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--rs);color:var(--t2);cursor:pointer;transition:all .15s;font-size:13.5px;font-weight:500;user-select:none;}
+.ni:hover{background:var(--s2);color:var(--tx);}
+.ni.active{background:var(--acc);color:#0e0f0e;}
+.ni .ico{font-size:14px;width:18px;text-align:center;}
+.ni .nb{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-family:'DM Mono',monospace;padding:1px 6px;border-radius:10px;}
+.ni.active .nb{background:rgba(0,0,0,.25);}
+.user-area{padding:14px;border-top:1px solid var(--b1);}
+.ulbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:6px;}
+.usw{display:flex;gap:6px;margin-bottom:8px;}
+.ubtn{flex:1;padding:7px 6px;border-radius:var(--rs);border:1px solid var(--b1);background:transparent;color:var(--t2);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .15s;}
+.ubtn.active{background:var(--s2);border-color:var(--b2);color:var(--tx);}
+.side-actions{display:flex;gap:6px;}
+.side-btn{flex:1;padding:6px;border-radius:var(--rs);border:1px solid var(--b1);background:transparent;color:var(--t3);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;text-align:center;letter-spacing:.04em;}
+.side-btn:hover{background:var(--s2);color:var(--t2);border-color:var(--b2);}
+.topbar{height:56px;border-bottom:1px solid var(--b1);display:flex;align-items:center;padding:0 24px;gap:16px;background:var(--sf);position:sticky;top:0;z-index:50;}
+.top-t{font-family:'Playfair Display',serif;font-size:19px;font-weight:600;flex:1;}
+.ham{display:none;background:none;border:none;color:var(--tx);font-size:20px;cursor:pointer;padding:4px;}
+@media(max-width:768px){.ham{display:block}}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rs);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .15s;}
+.bp{background:var(--acc);color:#0e0f0e;}.bp:hover{background:var(--acc2);}.bp:disabled{opacity:.5;cursor:not-allowed;}
+.bg{background:transparent;color:var(--t2);border:1px solid var(--b1);}.bg:hover{background:var(--s2);color:var(--tx);border-color:var(--b2);}
+.bsm{padding:5px 12px;font-size:12px;}
+.bdel{background:rgba(232,80,64,.12);color:var(--red);border:1px solid rgba(232,80,64,.25);}.bdel:hover{background:rgba(232,80,64,.22);}
+.cnt{padding:24px;flex:1;}
+@media(max-width:768px){.cnt{padding:14px}}
+.page{display:none;}.page.active{display:block;animation:fi .2s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes su{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:22px;}
+.kc{background:var(--sf);border:1px solid var(--b1);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden;}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kc.cg::before{background:var(--grn)}.kc.cr::before{background:var(--red)}.kc.ca::before{background:var(--acc)}.kc.cy::before{background:var(--yel)}.kc.cb::before{background:var(--blu)}
+.kl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
+.kv{font-family:'Playfair Display',serif;font-size:26px;font-weight:600;line-height:1;}
+.ks{font-size:11px;color:var(--t2);margin-top:6px;}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:900px){.dg{grid-template-columns:1fr}}
+.panel{background:var(--sf);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;}
+.ph{padding:13px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;}
+.pt{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--t2);}
+.rbar{display:flex;gap:6px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.rbtn{padding:5px 12px;border-radius:var(--rs);border:1px solid var(--b1);background:transparent;color:var(--t2);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;}
+.rbtn.active{background:var(--acc);color:#0e0f0e;border-color:var(--acc);}
+.rbtn:hover:not(.active){background:var(--s2);color:var(--tx);}
+.ri{background:var(--bg);border:1px solid var(--b1);border-radius:var(--rs);padding:5px 9px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.ri:focus{border-color:var(--acc);}
+.tc{background:var(--sf);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;}
+.tb{padding:13px 16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sr{background:var(--bg);border:1px solid var(--b1);border-radius:var(--rs);padding:7px 12px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:200px;transition:border-color .15s;}
+.sr:focus{border-color:var(--acc);}
+.sr::placeholder{color:var(--t3);}
+.fl{background:var(--bg);border:1px solid var(--b1);border-radius:var(--rs);padding:7px 10px;color:var(--t2);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;cursor:pointer;}
+.fl:focus{border-color:var(--acc);}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{padding:9px 14px;text-align:left;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--b1);white-space:nowrap;}
+td{padding:10px 14px;border-bottom:1px solid var(--b1);color:var(--t2);font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--s2);color:var(--tx);}
+td.pri{color:var(--tx);font-weight:500;}
+td.mn{font-family:'DM Mono',monospace;font-size:12px;}
+td.pos{font-family:'DM Mono',monospace;font-weight:500;color:var(--grn);}
+td.neg{font-family:'DM Mono',monospace;font-weight:500;color:var(--red);}
+.tf{padding:11px 16px;border-top:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center;}
+.ti{font-family:'DM Mono',monospace;font-size:11px;color:var(--t3);}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-family:'DM Mono',monospace;white-space:nowrap;}
+.bd{background:rgba(232,192,64,.15);color:var(--yel);}
+.bs{background:rgba(64,144,232,.15);color:var(--blu);}
+.ba{background:rgba(64,200,112,.15);color:var(--grn);}
+.bi{background:rgba(64,200,112,.12);color:var(--grn);}
+.be{background:rgba(232,80,64,.12);color:var(--red);}
+.bw{background:rgba(200,232,64,.12);color:var(--acc);}
+.bsh{background:rgba(64,144,232,.12);color:var(--blu);}
+.bp2{background:rgba(232,192,64,.12);color:var(--yel);}
+.bn{background:var(--s2);color:var(--t2);}
+.bact{background:rgba(64,200,112,.15);color:var(--grn);}
+.ras{display:flex;gap:5px;opacity:0;transition:opacity .15s;}
+tr:hover .ras{opacity:1;}
+.ra{background:var(--s2);border:1px solid var(--b1);border-radius:4px;padding:3px 8px;color:var(--t2);font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;transition:all .15s;}
+.ra:hover{border-color:var(--acc);color:var(--acc);}
+.appbtn{background:rgba(64,200,112,.15);color:var(--grn);border:1px solid rgba(64,200,112,.3);border-radius:4px;padding:3px 9px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s;}
+.appbtn:hover{background:rgba(64,200,112,.25);}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
+.ov.open{display:flex;}
+.modal{background:var(--sf);border:1px solid var(--b2);border-radius:12px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;animation:su .2s ease;}
+.modal.lg{max-width:700px;}
+.mh{padding:20px 24px 16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--sf);z-index:1;}
+.mt{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;}
+.mc{background:none;border:none;color:var(--t2);font-size:20px;cursor:pointer;line-height:1;}
+.mc:hover{color:var(--tx);}
+.mb{padding:20px 24px;}
+.mf{padding:14px 24px;border-top:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.mfr{display:flex;gap:8px;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.fg .full{grid-column:1/-1;}
+@media(max-width:500px){.fg{grid-template-columns:1fr}}
+.fsec{margin-bottom:20px;}
+.fst{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin-bottom:11px;padding-bottom:6px;border-bottom:1px solid var(--b1);}
+.fld{display:flex;flex-direction:column;gap:5px;}
+.fld label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);}
+.fld label .req{color:var(--acc);margin-left:2px;}
+.fld input,.fld select,.fld textarea{background:var(--bg);border:1px solid var(--b1);border-radius:var(--rs);padding:9px 11px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s;width:100%;}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--acc);}
+.fld input::placeholder,.fld textarea::placeholder{color:var(--t3);}
+.fld textarea{resize:vertical;min-height:68px;}
+.fld select option{background:var(--sf);}
+.fld.err input,.fld.err select,.fld.err textarea{border-color:var(--red)!important;}
+.fld.err label{color:var(--red);}
+.ckr{display:flex;align-items:center;gap:8px;padding:8px 0;}
+.ckr input[type=checkbox]{width:16px;height:16px;accent-color:var(--acc);cursor:pointer;}
+.ckr label{font-size:13px;color:var(--t2);cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:normal;text-transform:none;}
+.dl{display:grid;grid-template-columns:150px 1fr;}
+.dlr{display:contents;}
+.dlr .dll{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:9px 12px 9px 0;border-bottom:1px solid var(--b1);}
+.dlr .dlv{color:var(--tx);font-size:13px;padding:9px 0;border-bottom:1px solid var(--b1);}
+.cfb{background:var(--sf);border:1px solid var(--b2);border-radius:12px;width:100%;max-width:360px;padding:28px 28px 22px;text-align:center;animation:su .15s ease;}
+.cfi{font-size:28px;margin-bottom:10px;}.cft{font-family:'Playfair Display',serif;font-size:17px;margin-bottom:6px;}.cfs{font-size:12px;color:var(--t2);margin-bottom:22px;}
+.cfbtns{display:flex;gap:10px;justify-content:center;}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:.8}}
+.sk{background:var(--s2);border-radius:4px;animation:pulse 1.5s infinite;}
+.es{padding:48px 24px;text-align:center;}.ei{font-size:30px;margin-bottom:12px;opacity:.4;}.etit{font-family:'Playfair Display',serif;font-size:16px;color:var(--t2);margin-bottom:6px;}.esub{font-size:12px;color:var(--t3);}
+.tst{position:fixed;bottom:20px;right:20px;z-index:400;display:flex;flex-direction:column;gap:8px;}
+.tst .t{background:var(--s2);border:1px solid var(--b2);border-radius:var(--rs);padding:11px 15px;font-size:13px;display:flex;align-items:center;gap:9px;animation:tin .2s ease;min-width:220px;}
+.tst .t.success{border-left:3px solid var(--grn);}.tst .t.error{border-left:3px solid var(--red);}
+@keyframes tin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.sbo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;}.sbo.open{display:block;}
+.fb{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.ph2{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- ═══════ LOGIN SCREEN ═══════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">Business Operations</div>
+    <div class="login-sub">Cashew Trading Co.</div>
+    <label class="login-label" for="pwInput">Password</label>
+    <input class="login-input" type="password" id="pwInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <div class="login-err" id="loginErr"></div>
+    <button class="login-btn" onclick="doLogin()">Unlock</button>
+    <div class="login-hint">Contact your administrator if you've forgotten your password.</div>
+  </div>
+</div>
+
+<!-- ═══════ CHANGE PASSWORD MODAL ═══════ -->
+<div id="chpwModal">
+  <div class="chpw-box">
+    <div class="chpw-hdr"><div class="chpw-title">Change Password</div><button class="mc" onclick="closeChpw()">✕</button></div>
+    <div class="chpw-body">
+      <div class="fg" style="grid-template-columns:1fr">
+        <div class="fld"><label>Current Password <span class="req">*</span></label><input type="password" id="cpw_cur" placeholder="Enter current password"/></div>
+        <div class="fld"><label>New Password <span class="req">*</span></label><input type="password" id="cpw_new" placeholder="Min 6 characters"/></div>
+        <div class="fld"><label>Confirm New Password <span class="req">*</span></label><input type="password" id="cpw_con" placeholder="Repeat new password"/></div>
+        <div id="chpwErr" style="font-size:12px;color:var(--red);min-height:16px;"></div>
+      </div>
+    </div>
+    <div class="chpw-ftr"><button class="btn bg" onclick="closeChpw()">Cancel</button><button class="btn bp" onclick="doChpw()">Update Password</button></div>
+  </div>
+</div>
+
+<!-- ═══════ MAIN APP ═══════ -->
+<div id="app">
+<div class="sbo" id="sbo" onclick="closeSB()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="logo"><div class="logo-t">Business<br>Operations</div><div class="logo-s">Cashew Trading Co.</div></div>
+  <nav class="nav">
+    <div class="nav-sec"><div class="nav-lbl">Overview</div>
+      <div class="ni active" id="ni-dashboard" onclick="go('dashboard',this)"><span class="ico">◈</span> Dashboard</div>
+    </div>
+    <div class="nav-sec"><div class="nav-lbl">Finance</div>
+      <div class="ni" id="ni-transactions" onclick="go('transactions',this)"><span class="ico">⇄</span> Transactions <span class="nb" id="pBadge" style="display:none">0</span></div>
+      <div class="ni" id="ni-fx" onclick="go('fx',this)"><span class="ico">◎</span> FX Conversions</div>
+    </div>
+    <div class="nav-sec"><div class="nav-lbl">Operations</div>
+      <div class="ni" id="ni-inventory" onclick="go('inventory',this)"><span class="ico">▦</span> Inventory</div>
+      <div class="ni" id="ni-contacts" onclick="go('contacts',this)"><span class="ico">◉</span> Contacts</div>
+      <div class="ni" id="ni-assets" onclick="go('assets',this)"><span class="ico">◇</span> Assets</div>
+    </div>
+  </nav>
+  <div class="user-area">
+    <div class="ulbl">Viewing as</div>
+    <div class="usw">
+      <button class="ubtn active" onclick="setRole('owner',this)">Owner</button>
+      <button class="ubtn" onclick="setRole('assistant',this)">Assistant</button>
+    </div>
+    <div class="side-actions">
+      <button class="side-btn" onclick="openChpw()">🔑 Change PW</button>
+      <button class="side-btn" onclick="doLogout()">↩ Logout</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar"><button class="ham" onclick="toggleSB()">☰</button><div class="top-t" id="topT">Dashboard</div></div>
+  <div class="cnt">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="rbar" id="drbar">
+        <button class="rbtn active" onclick="setDR('all',this)">All Time</button>
+        <button class="rbtn" onclick="setDR('month',this)">This Month</button>
+        <button class="rbtn" onclick="setDR('quarter',this)">This Quarter</button>
+        <button class="rbtn" onclick="setDR('year',this)">This Year</button>
+        <button class="rbtn" onclick="setDR('custom',this)">Custom</button>
+        <div id="dcrng" style="display:none;gap:6px;align-items:center">
+          <input type="date" class="ri" id="dfrom" onchange="renderDash()"/>
+          <span style="color:var(--t3);font-size:12px">→</span>
+          <input type="date" class="ri" id="dto" onchange="renderDash()"/>
+        </div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kc cg"><div class="kl">Income (Approved)</div><div class="kv" id="kI">—</div><div class="ks" id="kIs"></div></div>
+        <div class="kc cr"><div class="kl">Expenses (Approved)</div><div class="kv" id="kE">—</div><div class="ks" id="kEs"></div></div>
+        <div class="kc ca"><div class="kl">Net Position</div><div class="kv" id="kN">—</div><div class="ks" id="kNs"></div></div>
+        <div class="kc cy"><div class="kl">Inventory (MT)</div><div class="kv" id="kM">—</div><div class="ks" id="kMs"></div></div>
+        <div class="kc cb"><div class="kl">Active Lots</div><div class="kv" id="kL">—</div><div class="ks" id="kLs"></div></div>
+      </div>
+      <div class="dg">
+        <div class="panel"><div class="ph"><div class="pt">Recent Transactions</div><button class="btn bg bsm" onclick="go('transactions',document.getElementById('ni-transactions'))">View all</button></div>
+          <div class="tw"><table><thead><tr><th>Date</th><th>Description</th><th>Amount USD</th><th>Status</th></tr></thead><tbody id="dTB"></tbody></table></div></div>
+        <div class="panel"><div class="ph"><div class="pt">Inventory Lots</div><button class="btn bg bsm" onclick="go('inventory',document.getElementById('ni-inventory'))">View all</button></div>
+          <div class="tw"><table><thead><tr><th>Lot</th><th>Grade</th><th>MT Balance</th><th>Status</th></tr></thead><tbody id="dIB"></tbody></table></div></div>
+        <div class="panel" id="pendPanel"><div class="ph"><div class="pt">⚑ Pending Approval</div><span class="badge bd" id="pCount">0</span></div>
+          <div class="tw"><table><thead><tr><th>Date</th><th>Description</th><th>Amount</th><th></th></tr></thead><tbody id="dPB"></tbody></table></div></div>
+        <div class="panel"><div class="ph"><div class="pt">Recent FX Conversions</div></div>
+          <div class="tw"><table><thead><tr><th>Date</th><th>From</th><th>To</th><th>Rate</th></tr></thead><tbody id="dFB"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="page" id="page-transactions">
+      <div class="fb"><div class="ph2">Transactions</div><button class="btn bp" onclick="openM('txn')">+ New Transaction</button></div>
+      <div class="rbar" id="trbar">
+        <button class="rbtn active" onclick="setTR('all',this)">All Time</button>
+        <button class="rbtn" onclick="setTR('month',this)">This Month</button>
+        <button class="rbtn" onclick="setTR('quarter',this)">This Quarter</button>
+        <button class="rbtn" onclick="setTR('year',this)">This Year</button>
+        <button class="rbtn" onclick="setTR('custom',this)">Custom</button>
+        <div id="tcrng" style="display:none;gap:6px;align-items:center">
+          <input type="date" class="ri" id="tfrom" onchange="af('txn')"/>
+          <span style="color:var(--t3);font-size:12px">→</span>
+          <input type="date" class="ri" id="tto" onchange="af('txn')"/>
+        </div>
+      </div>
+      <div class="tc">
+        <div class="tb">
+          <input class="sr" placeholder="Search…" oninput="fs.txn.q=this.value;af('txn')"/>
+          <select class="fl" onchange="fs.txn.st=this.value;af('txn')"><option value="">All Statuses</option><option>Draft</option><option>Submitted</option><option>Approved</option></select>
+          <select class="fl" onchange="fs.txn.ty=this.value;af('txn')"><option value="">All Types</option><option>Income</option><option>Expense</option></select>
+        </div>
+        <div class="tw"><table><thead><tr><th>#</th><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Counterparty</th><th>Amount (USD)</th><th>Payment</th><th>Status</th><th></th></tr></thead><tbody id="txnB"></tbody></table></div>
+        <div class="tf"><div class="ti" id="txnI">—</div></div>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="page" id="page-inventory">
+      <div class="fb"><div class="ph2">Inventory</div><button class="btn bp" onclick="openM('inv')">+ New Lot</button></div>
+      <div class="tc">
+        <div class="tb">
+          <input class="sr" placeholder="Search lots…" oninput="fs.inv.q=this.value;af('inv')"/>
+          <select class="fl" onchange="fs.inv.st=this.value;af('inv')"><option value="">All Statuses</option><option>In Warehouse</option><option>Shipped</option><option>Processing</option></select>
+        </div>
+        <div class="tw"><table><thead><tr><th>Lot ID</th><th>Date In</th><th>Date Out</th><th>Supplier</th><th>Origin</th><th>Grade</th><th>MT Qty</th><th>MT Balance</th><th>Cost/MT USD</th><th>Quality</th><th>Status</th><th></th></tr></thead><tbody id="invB"></tbody></table></div>
+        <div class="tf"><div class="ti" id="invI">—</div></div>
+      </div>
+    </div>
+
+    <!-- FX -->
+    <div class="page" id="page-fx">
+      <div class="fb"><div class="ph2">FX Conversions</div><button class="btn bp" onclick="openM('fx')">+ New Conversion</button></div>
+      <div class="tc">
+        <div class="tb"><input class="sr" placeholder="Search…" oninput="fs.fx.q=this.value;af('fx')"/></div>
+        <div class="tw"><table><thead><tr><th>#</th><th>Date</th><th>From</th><th>Amount From</th><th>To</th><th>Amount To</th><th>FX Rate</th><th>Counterparty</th><th>Purpose</th><th></th></tr></thead><tbody id="fxB"></tbody></table></div>
+        <div class="tf"><div class="ti" id="fxI">—</div></div>
+      </div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div class="page" id="page-contacts">
+      <div class="fb"><div class="ph2">Contacts</div><button class="btn bp" id="newCBtn" onclick="openM('contact')">+ New Contact</button></div>
+      <div class="tc">
+        <div class="tb">
+          <input class="sr" placeholder="Search contacts…" oninput="fs.co.q=this.value;af('co')"/>
+          <select class="fl" onchange="fs.co.ty=this.value;af('co')"><option value="">All Types</option><option>Supplier</option><option>Buyer</option><option>Broker</option><option>Bank / FX</option><option>Freight / Logistics</option></select>
+        </div>
+        <div class="tw"><table><thead><tr><th>Name</th><th>Type</th><th>Country</th><th>Contact Person</th><th>Email</th><th>Phone</th><th>Currency</th><th>Status</th><th></th></tr></thead><tbody id="coB"></tbody></table></div>
+        <div class="tf"><div class="ti" id="coI">—</div></div>
+      </div>
+    </div>
+
+    <!-- ASSETS -->
+    <div class="page" id="page-assets">
+      <div class="fb"><div class="ph2">Assets</div><button class="btn bp" onclick="openM('asset')">+ New Asset</button></div>
+      <div class="tc">
+        <div class="tb"><input class="sr" placeholder="Search assets…" oninput="fs.asset.q=this.value;af('asset')"/></div>
+        <div class="tw"><table><thead><tr><th>#</th><th>Asset Name</th><th>Category</th><th>Date Acquired</th><th>Original Value</th><th>Approx USD</th><th>Current Value USD</th><th>Depreciation</th><th>Status</th><th></th></tr></thead><tbody id="assetB"></tbody></table></div>
+        <div class="tf"><div class="ti" id="assetI">—</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div><!-- /app -->
+
+<!-- TXN MODAL -->
+<div class="ov" id="modal-txn"><div class="modal lg">
+  <div class="mh"><div class="mt" id="txnTit">New Transaction</div><button class="mc" onclick="closeM('txn')">✕</button></div>
+  <div class="mb">
+    <div class="fsec"><div class="fst">Core Details</div><div class="fg">
+      <div class="fld" id="f-txn_date"><label>Date <span class="req">*</span></label><input type="date" id="txn_date"/></div>
+      <div class="fld" id="f-txn_type"><label>Type <span class="req">*</span></label><select id="txn_type"><option value="">Select…</option><option>Income</option><option>Expense</option></select></div>
+      <div class="fld"><label>Category</label><select id="txn_cat"><option value="">Select…</option></select></div>
+      <div class="fld"><label>Payment Status</label><select id="txn_pst"><option value="">Select…</option></select></div>
+      <div class="fld full"><label>Description</label><textarea id="txn_desc" placeholder="What is this transaction for?"></textarea></div>
+      <div class="fld full"><label>Counterparty</label><select id="txn_cp"><option value="">Select contact…</option></select></div>
+      <div class="fld full"><label>Linked Inventory Lot</label><select id="txn_inv"><option value="">Link to a lot (optional)…</option></select></div>
+    </div></div>
+    <div class="fsec"><div class="fst">Amount</div><div class="fg">
+      <div class="fld" id="f-txn_amt"><label>Amount <span class="req">*</span></label><input type="number" id="txn_amt" placeholder="0.00" step="0.01"/></div>
+      <div class="fld"><label>Currency</label><select id="txn_cur"><option value="">Select…</option></select></div>
+      <div class="fld"><label>Amount (USD)</label><input type="number" id="txn_usd" placeholder="0.00" step="0.01"/></div>
+      <div class="fld"><label>Payment Method</label><select id="txn_pm"><option value="">Select…</option></select></div>
+    </div></div>
+    <div class="fsec"><div class="fst">Tax</div><div class="fg">
+      <div class="fld"><label>Tax Type</label><select id="txn_tt"><option value="">None</option><option>VAT</option><option>Withholding Tax</option><option>Import Duty</option><option>Export Levy</option><option>Other</option></select></div>
+      <div class="fld"><label>Tax Amount (USD)</label><input type="number" id="txn_ta" placeholder="0.00" step="0.01"/></div>
+    </div></div>
+    <div class="fsec"><div class="fst">Admin</div><div class="fg">
+      <div class="fld full"><label>Notes</label><textarea id="txn_notes" placeholder="Additional notes…"></textarea></div>
+      <div class="fld" id="statusFld"><label>Entry Status</label><select id="txn_status"><option value="Draft">Draft</option><option value="Submitted">Submitted</option><option value="Approved">Approved</option></select></div>
+    </div></div>
+  </div>
+  <div class="mf"><button class="btn bdel" id="delTxn" onclick="confirmDel('txn')" style="display:none">Delete</button><div class="mfr"><button class="btn bg" onclick="closeM('txn')">Cancel</button><button class="btn bp" onclick="save('txn')">Save Transaction</button></div></div>
+</div></div>
+
+<!-- INV MODAL -->
+<div class="ov" id="modal-inv"><div class="modal lg">
+  <div class="mh"><div class="mt" id="invTit">New Inventory Lot</div><button class="mc" onclick="closeM('inv')">✕</button></div>
+  <div class="mb">
+    <div class="fsec"><div class="fst">Lot Details</div><div class="fg">
+      <div class="fld" id="f-inv_di"><label>Date In <span class="req">*</span></label><input type="date" id="inv_di"/></div>
+      <div class="fld"><label>Date Out</label><input type="date" id="inv_do"/></div>
+      <div class="fld" id="f-inv_qty"><label>Supplier</label><select id="inv_sup"><option value="">Select contact…</option></select></div>
+      <div class="fld"><label>Origin Country</label><select id="inv_ori"><option value="">Select…</option></select></div>
+      <div class="fld"><label>Grade</label><select id="inv_gr"><option value="">Select…</option></select></div>
+      <div class="fld"><label>Storage Location</label><input type="text" id="inv_sl" placeholder="e.g. Bay 3A"/></div>
+      <div class="fld"><label>Warehouse Status</label><select id="inv_ws"><option value="">Select…</option></select></div>
+    </div></div>
+    <div class="fsec"><div class="fst">Cost</div><div class="fg">
+      <div class="fld" id="f-inv_qty2"><label>MT Quantity <span class="req">*</span></label><input type="number" id="inv_qty" placeholder="0.000" step="0.001"/></div>
+      <div class="fld"><label>Cost/MT (Original)</label><input type="number" id="inv_cmo" placeholder="0.00" step="0.01"/></div>
+      <div class="fld"><label>Cost Currency</label><select id="inv_cc"><option value="">Select…</option></select></div>
+      <div class="fld"><label>Cost/MT (USD)</label><input type="number" id="inv_cmu" placeholder="0.00" step="0.01"/></div>
+      <div class="fld"><label>Total Cost (USD)</label><input type="number" id="inv_tc" placeholder="0.00" step="0.01"/></div>
+      <div class="fld"><label>MT Shipped</label><input type="number" id="inv_mts" placeholder="0.000" step="0.001"/></div>
+    </div></div>
+    <div class="fsec"><div class="fst">Quality Metrics</div><div class="fg">
+      <div class="fld"><label>Moisture %</label><input type="number" id="inv_moi" placeholder="0.00" step="0.01"/></div>
+      <div class="fld"><label>Outturn lbs/80kg</label><input type="number" id="inv_out" placeholder="0.0" step="0.1"/></div>
+      <div class="fld"><label>Nut Count /kg</label><input type="number" id="inv_nc" placeholder="0"/></div>
+      <div class="fld"><label>Foreign Matter %</label><input type="number" id="inv_fm" placeholder="0.00" step="0.01"/></div>
+      <div class="fld"><label>Defective %</label><input type="number" id="inv_def" placeholder="0.00" step="0.01"/></div>
+      <div class="fld"><label>Quality Overall</label><select id="inv_qo"><option value="">Select…</option></select></div>
+    </div></div>
+    <div class="fsec"><div class="fst">Notes</div><div class="fg"><div class="fld full"><textarea id="inv_notes" placeholder="Additional notes…"></textarea></div></div></div>
+  </div>
+  <div class="mf"><button class="btn bdel" id="delInv" onclick="confirmDel('inv')" style="display:none">Delete</button><div class="mfr"><button class="btn bg" onclick="closeM('inv')">Cancel</button><button class="btn bp" onclick="save('inv')">Save Lot</button></div></div>
+</div></div>
+
+<!-- FX MODAL -->
+<div class="ov" id="modal-fx"><div class="modal">
+  <div class="mh"><div class="mt" id="fxTit">New FX Conversion</div><button class="mc" onclick="closeM('fx')">✕</button></div>
+  <div class="mb"><div class="fg">
+    <div class="fld" id="f-fx_date"><label>Date <span class="req">*</span></label><input type="date" id="fx_date"/></div>
+    <div class="fld"><label>Counterparty</label><select id="fx_cp"><option value="">Select contact…</option></select></div>
+    <div class="fld" id="f-fx_fc"><label>From Currency <span class="req">*</span></label><select id="fx_fc"><option value="">Select…</option></select></div>
+    <div class="fld" id="f-fx_af"><label>Amount From <span class="req">*</span></label><input type="number" id="fx_af" placeholder="0.00" step="0.01"/></div>
+    <div class="fld" id="f-fx_tc"><label>To Currency <span class="req">*</span></label><select id="fx_tc"><option value="">Select…</option></select></div>
+    <div class="fld" id="f-fx_at"><label>Amount To <span class="req">*</span></label><input type="number" id="fx_at" placeholder="0.00" step="0.01"/></div>
+    <div class="fld"><label>FX Rate</label><input type="number" id="fx_rate" placeholder="0.000000" step="0.000001"/></div>
+    <div class="fld full"><label>Reference / Purpose</label><textarea id="fx_ref" placeholder="What was this conversion for?"></textarea></div>
+  </div></div>
+  <div class="mf"><button class="btn bdel" id="delFx" onclick="confirmDel('fx')" style="display:none">Delete</button><div class="mfr"><button class="btn bg" onclick="closeM('fx')">Cancel</button><button class="btn bp" onclick="save('fx')">Save Conversion</button></div></div>
+</div></div>
+
+<!-- CONTACT MODAL -->
+<div class="ov" id="modal-contact"><div class="modal">
+  <div class="mh"><div class="mt" id="coTit">New Contact</div><button class="mc" onclick="closeM('contact')">✕</button></div>
+  <div class="mb"><div class="fg">
+    <div class="fld full" id="f-co_name"><label>Contact Name <span class="req">*</span></label><input type="text" id="co_name" placeholder="Full legal name"/></div>
+    <div class="fld full"><label>Type</label><select id="co_type" multiple style="height:90px"><option>Supplier</option><option>Buyer</option><option>Broker</option><option>Bank / FX</option><option>Freight / Logistics</option><option>Other</option></select><div style="font-size:11px;color:var(--t3);margin-top:3px">Hold Ctrl/Cmd for multiple</div></div>
+    <div class="fld"><label>Country</label><input type="text" id="co_country" placeholder="e.g. Guinea"/></div>
+    <div class="fld"><label>Contact Person</label><input type="text" id="co_person" placeholder="Primary contact"/></div>
+    <div class="fld"><label>Phone</label><input type="tel" id="co_phone" placeholder="+1 555 000 0000"/></div>
+    <div class="fld"><label>Email</label><input type="email" id="co_email" placeholder="email@example.com"/></div>
+    <div class="fld"><label>Currency</label><select id="co_cur"><option value="">Select…</option><option>USD</option><option>GNF</option><option>EUR</option><option>GBP</option><option>XOF</option></select></div>
+    <div class="fld"><label>Payment Terms</label><input type="text" id="co_pt" placeholder="e.g. 30 days, TT in advance"/></div>
+    <div class="fld full"><label>Bank Details</label><textarea id="co_bank" placeholder="Bank name, account number, SWIFT/IBAN…"></textarea></div>
+    <div class="fld full"><div class="ckr"><input type="checkbox" id="co_active" checked/><label for="co_active">Active contact</label></div></div>
+    <div class="fld full"><label>Notes</label><textarea id="co_notes" placeholder="Additional notes…"></textarea></div>
+  </div></div>
+  <div class="mf"><button class="btn bdel" id="delCo" onclick="confirmDel('contact')" style="display:none">Delete</button><div class="mfr"><button class="btn bg" onclick="closeM('contact')">Cancel</button><button class="btn bp" onclick="save('contact')">Save Contact</button></div></div>
+</div></div>
+
+<!-- ASSET MODAL -->
+<div class="ov" id="modal-asset"><div class="modal">
+  <div class="mh"><div class="mt" id="assetTit">New Asset</div><button class="mc" onclick="closeM('asset')">✕</button></div>
+  <div class="mb"><div class="fg">
+    <div class="fld full" id="f-asset_name"><label>Asset Name <span class="req">*</span></label><input type="text" id="asset_name" placeholder="e.g. Pickup Truck"/></div>
+    <div class="fld"><label>Category</label><select id="asset_cat"><option value="">Select…</option></select></div>
+    <div class="fld"><label>Date Acquired</label><input type="date" id="asset_da"/></div>
+    <div class="fld"><label>Original Value</label><input type="number" id="asset_ov" placeholder="0.00" step="0.01"/></div>
+    <div class="fld"><label>Currency</label><select id="asset_cur"><option value="">Select…</option></select></div>
+    <div class="fld"><label>Approx Value (USD)</label><input type="number" id="asset_usd" placeholder="0.00" step="0.01"/></div>
+    <div class="fld"><label>Depreciation % p.a.</label><input type="number" id="asset_dep" placeholder="0.00" step="0.01" max="100"/></div>
+    <div class="fld"><label>Current Status</label><select id="asset_st"><option value="">Select…</option></select></div>
+    <div class="fld"><label>Disposal Date</label><input type="date" id="asset_dd"/></div>
+    <div class="fld full"><label>Notes</label><textarea id="asset_notes" placeholder="Additional notes…"></textarea></div>
+  </div></div>
+  <div class="mf"><button class="btn bdel" id="delAsset" onclick="confirmDel('asset')" style="display:none">Delete</button><div class="mfr"><button class="btn bg" onclick="closeM('asset')">Cancel</button><button class="btn bp" onclick="save('asset')">Save Asset</button></div></div>
+</div></div>
+
+<!-- DETAIL MODAL -->
+<div class="ov" id="modal-detail"><div class="modal lg">
+  <div class="mh"><div class="mt" id="detTit">Record Detail</div><button class="mc" onclick="closeM('detail')">✕</button></div>
+  <div class="mb" id="detBody"></div>
+  <div class="mf"><div></div><div class="mfr"><button class="btn bg" onclick="closeM('detail')">Close</button><button class="btn bp" id="detEdit">Edit</button></div></div>
+</div></div>
+
+<!-- CONFIRM DELETE -->
+<div class="ov" id="modal-confirm"><div class="cfb">
+  <div class="cfi">⚠</div><div class="cft">Delete Record?</div>
+  <div class="cfs">This cannot be undone. The record will be permanently removed from Airtable.</div>
+  <div class="cfbtns"><button class="btn bg" onclick="closeM('confirm')">Cancel</button><button class="btn" style="background:var(--red);color:#fff" onclick="execDel()">Yes, Delete</button></div>
+</div></div>
+
+<div class="tst" id="tst"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  PASSWORD SYSTEM
+//  Uses SHA-256 hashing. Password hash stored in
+//  localStorage so changes persist across sessions.
+// ═══════════════════════════════════════════════
+const DEFAULT_HASH='5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // sha256('password')
+const PW_KEY='biz_ops_pw_hash';
+const SESSION_KEY='biz_ops_session';
+
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function getStoredHash(){return localStorage.getItem(PW_KEY)||DEFAULT_HASH;}
+
+async function doLogin(){
+  const pw=document.getElementById('pwInput').value;
+  const inp=document.getElementById('pwInput');
+  const err=document.getElementById('loginErr');
+  if(!pw){inp.classList.add('err');err.textContent='Please enter your password.';return;}
+  const h=await sha256(pw);
+  if(h===getStoredHash()){
+    sessionStorage.setItem(SESSION_KEY,'1');
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    err.textContent='';inp.classList.remove('err');inp.value='';
+    initApp();
+  }else{
+    inp.classList.add('err');
+    err.textContent='Incorrect password. Please try again.';
+    inp.value='';inp.focus();
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('pwInput').value='';
+  document.getElementById('loginErr').textContent='';
+  document.getElementById('pwInput').classList.remove('err');
+}
+
+function openChpw(){document.getElementById('chpwModal').classList.add('open');['cpw_cur','cpw_new','cpw_con'].forEach(id=>document.getElementById(id).value='');document.getElementById('chpwErr').textContent='';}
+function closeChpw(){document.getElementById('chpwModal').classList.remove('open');}
+
+async function doChpw(){
+  const cur=document.getElementById('cpw_cur').value;
+  const nw=document.getElementById('cpw_new').value;
+  const con=document.getElementById('cpw_con').value;
+  const err=document.getElementById('chpwErr');
+  err.textContent='';
+  if(!cur||!nw||!con){err.textContent='All fields are required.';return;}
+  if(nw.length<6){err.textContent='New password must be at least 6 characters.';return;}
+  if(nw!==con){err.textContent='New passwords do not match.';return;}
+  const curH=await sha256(cur);
+  if(curH!==getStoredHash()){err.textContent='Current password is incorrect.';return;}
+  const newH=await sha256(nw);
+  localStorage.setItem(PW_KEY,newH);
+  closeChpw();
+  toast('Password updated successfully','success');
+}
+
+// Auto-login if session exists
+window.addEventListener('DOMContentLoaded',()=>{
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    initApp();
+  }
+  document.getElementById('pwInput').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.getElementById('chpwModal').addEventListener('click',e=>{if(e.target===document.getElementById('chpwModal'))closeChpw();});
+});
+
+// ═══════════════════════════════════════════════
+//  AIRTABLE API
+// ═══════════════════════════════════════════════
+const TOK='patt2Tuwt2VtH9lHM.61d8cfa16e12722a243eb766a5e326a73d1a8d8ec0a3a2e1f2ceb89bd6d153c9';
+const BASE='appxgKbhUa2H3Ak5L';
+const TBL={txn:'tblKmFXgiRIbuo1vH',inv:'tblSFEi3roDsav3f9',asset:'tblIath9qXbnUTWUv',fx:'tbld4ch1cNc1sSlB4',contact:'tbl6VGcAfgaOQYfjP'};
+const REQ={txn:['txn_date','txn_type','txn_amt'],inv:['inv_di','inv_qty'],fx:['fx_date','fx_fc','fx_af','fx_tc','fx_at'],contact:['co_name'],asset:['asset_name']};
+const FIDS={txn:['f-txn_date','f-txn_type','f-txn_amt'],inv:['f-inv_di','f-inv_qty2'],fx:['f-fx_date','f-fx_fc','f-fx_af','f-fx_tc','f-fx_at'],contact:['f-co_name'],asset:['f-asset_name']};
+
+let role='owner';
+let C={txn:[],inv:[],asset:[],fx:[],contact:[],sch:{}};
+let eId={txn:null,inv:null,asset:null,fx:null,contact:null};
+let fs={txn:{q:'',st:'',ty:'',rng:'all'},inv:{q:'',st:''},fx:{q:''},co:{q:'',ty:''},asset:{q:''}};
+let dr={rng:'all'};
+let dp={k:null,id:null};
+let appInited=false;
+
+async function api(ep,m='GET',b=null){
+  const o={method:m,headers:{'Authorization':'Bearer '+TOK,'Content-Type':'application/json'}};
+  if(b)o.body=JSON.stringify(b);
+  const r=await fetch('https://api.airtable.com/v0/'+BASE+'/'+ep,o);
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
+  return r.json();
+}
+async function fetchAll(k){
+  let recs=[],off=null;
+  do{const u=TBL[k]+(off?'?offset='+off:'');const d=await api(u);recs=recs.concat(d.records);off=d.offset;}while(off);
+  C[k]=recs;return recs;
+}
+async function loadSch(){
+  const d=await api('meta/bases/'+BASE+'/tables');
+  d.tables.forEach(t=>{const k=Object.entries(TBL).find(([,v])=>v===t.id)?.[0];if(k)C.sch[k]=t.fields;});
+  popSels();
+}
+function ch(k,n){return(C.sch[k]||[]).find(f=>f.name===n)?.options?.choices?.map(c=>c.name)||[];}
+function popSels(){
+  fsl('txn_cat',ch('txn','Category'));fsl('txn_cur',ch('txn','Currency'));fsl('txn_pm',ch('txn','Payment Method'));fsl('txn_pst',ch('txn','Payment Status'));
+  fsl('inv_ori',ch('inv','Origin Country'));fsl('inv_gr',ch('inv','Grade'));fsl('inv_ws',ch('inv','Warehouse Status'));fsl('inv_cc',ch('inv','Cost Currency'));fsl('inv_qo',ch('inv','Quality Overall'));
+  fsl('fx_fc',ch('fx','From Currency'));fsl('fx_tc',ch('fx','To Currency'));
+  fsl('asset_cat',ch('asset','Category'));fsl('asset_cur',ch('asset','Currency'));fsl('asset_st',ch('asset','Current Status'));
+}
+function fsl(id,opts){const el=document.getElementById(id);if(!el)return;const cv=el.value;while(el.options.length>1)el.remove(1);opts.forEach(c=>{const o=document.createElement('option');o.value=c;o.text=c;el.add(o);});if(cv)el.value=cv;}
+function popCos(){
+  const cs=C.contact.map(r=>({id:r.id,n:r.fields['Contact Name']||'Unnamed'})).sort((a,b)=>a.n.localeCompare(b.n));
+  ['txn_cp','fx_cp','inv_sup'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const cv=el.value;while(el.options.length>1)el.remove(1);cs.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.text=c.n;el.add(o);});if(cv)el.value=cv;});
+  const iEl=document.getElementById('txn_inv');if(iEl){const cv=iEl.value;while(iEl.options.length>1)iEl.remove(1);C.inv.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.text='Lot #'+(r.fields['Lot ID']||r.id.slice(-4))+' — '+(r.fields.Grade||'')+(r.fields['Origin Country']?' ('+r.fields['Origin Country']+')':'');iEl.add(o);});if(cv)iEl.value=cv;}
+}
+
+function go(pg,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+pg).classList.add('active');
+  if(el)el.classList.add('active');
+  const TT={dashboard:'Dashboard',transactions:'Transactions',inventory:'Inventory',fx:'FX Conversions',contacts:'Contacts',assets:'Assets'};
+  document.getElementById('topT').textContent=TT[pg]||pg;
+  rp(pg);closeSB();
+}
+function curPg(){const a=document.querySelector('.page.active');return a?a.id.replace('page-',''):'dashboard';}
+function rp(pg){if(pg==='dashboard')renderDash();else if(pg==='transactions')renderTbl('txn');else if(pg==='inventory')renderTbl('inv');else if(pg==='fx')renderTbl('fx');else if(pg==='contacts')renderTbl('co');else if(pg==='assets')renderTbl('asset');}
+
+function setRole(r,btn){
+  role=r;document.querySelectorAll('.ubtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.getElementById('newCBtn').style.display=r==='owner'?'':'none';
+  document.getElementById('ni-assets').style.display=r==='owner'?'':'none';
+  document.getElementById('statusFld').style.display=r==='owner'?'':'none';
+  document.getElementById('pendPanel').style.display=r==='owner'?'':'none';
+  if(document.getElementById('page-assets').classList.contains('active')&&r==='assistant')go('dashboard',document.getElementById('ni-dashboard'));
+  rp(curPg());
+}
+
+function gdr(rng,fi,ti){
+  const n=new Date();const y=n.getFullYear();const m=n.getMonth();
+  if(rng==='month')return{f:new Date(y,m,1).toISOString().slice(0,10),t:new Date(y,m+1,0).toISOString().slice(0,10)};
+  if(rng==='quarter'){const q=Math.floor(m/3);return{f:new Date(y,q*3,1).toISOString().slice(0,10),t:new Date(y,q*3+3,0).toISOString().slice(0,10)};}
+  if(rng==='year')return{f:y+'-01-01',t:y+'-12-31'};
+  if(rng==='custom'){const fv=document.getElementById(fi)?.value;const tv=document.getElementById(ti)?.value;return{f:fv||'',t:tv||''};}
+  return{f:'',t:''};
+}
+function inR(ds,f,t){if(!ds)return true;if(!f&&!t)return true;if(f&&ds<f)return false;if(t&&ds>t)return false;return true;}
+function setDR(r,btn){dr.rng=r;document.querySelectorAll('#drbar .rbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const c=document.getElementById('dcrng');if(c)c.style.display=r==='custom'?'flex':'none';if(r!=='custom')renderDash();}
+function setTR(r,btn){fs.txn.rng=r;document.querySelectorAll('#trbar .rbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const c=document.getElementById('tcrng');if(c)c.style.display=r==='custom'?'flex':'none';if(r!=='custom')af('txn');}
+function cmap(){const m={};C.contact.forEach(c=>m[c.id]=c.fields['Contact Name']||'Unnamed');return m;}
+
+async function renderDash(){
+  try{
+    await Promise.all([fetchAll('txn'),fetchAll('inv'),fetchAll('fx'),fetchAll('contact')]);
+    popCos();
+    const{f,t}=gdr(dr.rng,'dfrom','dto');
+    const appTx=C.txn.filter(r=>r.fields['Entry Status']==='Approved'&&inR(r.fields.Date,f,t));
+    let inc=0,exp=0;appTx.forEach(r=>{const a=r.fields['Amount (USD)']||0;if(r.fields.Type==='Income')inc+=a;else if(r.fields.Type==='Expense')exp+=a;});
+    const net=inc-exp;
+    sk('kI',fu(inc),appTx.filter(r=>r.fields.Type==='Income').length+' approved income records');
+    sk('kE',fu(exp),appTx.filter(r=>r.fields.Type==='Expense').length+' approved expense records');
+    sk('kN',fu(net),net>=0?'Positive cash position':'Negative cash position');
+    const al=C.inv.filter(r=>r.fields['Warehouse Status']==='In Warehouse');
+    const tmt=al.reduce((s,r)=>{const b=r.fields['MT Balance'];return s+(b!=null?b:r.fields['MT Qty']||0);},0);
+    sk('kM',tmt.toFixed(2)+' MT',al.length+' lots in warehouse');sk('kL',String(C.inv.length),al.length+' in warehouse');
+    const cm=cmap();
+    const rt=[...C.txn].sort((a,b)=>(b.fields.Date||'').localeCompare(a.fields.Date||'')).slice(0,6);
+    document.getElementById('dTB').innerHTML=rt.length?rt.map(r=>`<tr style="cursor:pointer" onclick="openDet('txn','${r.id}')"><td class="mn">${r.fields.Date||'—'}</td><td>${(r.fields.Description||'—').slice(0,28)}</td><td class="${r.fields.Type==='Income'?'pos':'neg'}">${r.fields['Amount (USD)']!=null?fu(r.fields['Amount (USD)']):'—'}</td><td>${sb(r.fields['Entry Status'])}</td></tr>`).join(''):er(4,'No transactions yet');
+    const ri=[...C.inv].sort((a,b)=>(b.fields['Date In']||'').localeCompare(a.fields['Date In']||'')).slice(0,6);
+    document.getElementById('dIB').innerHTML=ri.length?ri.map(r=>{const b=r.fields['MT Balance']!=null?r.fields['MT Balance']:(r.fields['MT Qty']||0);return`<tr style="cursor:pointer" onclick="openDet('inv','${r.id}')"><td class="mn">${r.fields['Lot ID']||'—'}</td><td>${r.fields.Grade||'—'}</td><td class="mn">${b.toFixed(2)}</td><td>${wb(r.fields['Warehouse Status'])}</td></tr>`}).join(''):er(4,'No inventory yet');
+    const pnd=C.txn.filter(r=>r.fields['Entry Status']==='Draft'||r.fields['Entry Status']==='Submitted');
+    document.getElementById('pCount').textContent=pnd.length;const pb=document.getElementById('pBadge');pb.textContent=pnd.length;pb.style.display=pnd.length>0?'':'none';
+    document.getElementById('dPB').innerHTML=pnd.length?pnd.slice(0,6).map(r=>`<tr><td class="mn">${r.fields.Date||'—'}</td><td>${(r.fields.Description||'—').slice(0,24)}</td><td>${r.fields['Amount (USD)']!=null?fu(r.fields['Amount (USD)']):'—'}</td><td>${role==='owner'?`<button class="appbtn" onclick="approveR('${r.id}')">Approve</button>`:sb(r.fields['Entry Status'])}</td></tr>`).join(''):er(4,'No pending approvals');
+    const rf=[...C.fx].sort((a,b)=>(b.fields.Date||'').localeCompare(a.fields.Date||'')).slice(0,5);
+    document.getElementById('dFB').innerHTML=rf.length?rf.map(r=>`<tr><td class="mn">${r.fields.Date||'—'}</td><td>${r.fields['From Currency']||'—'}</td><td>${r.fields['To Currency']||'—'}</td><td class="mn">${r.fields['FX Rate']?r.fields['FX Rate'].toFixed(4):'—'}</td></tr>`).join(''):er(4,'No FX conversions yet');
+  }catch(e){toast('Dashboard error: '+e.message,'error');}
+}
+function sk(id,v,s){const el=document.getElementById(id);if(el)el.textContent=v;const se=document.getElementById(id+'s');if(se)se.textContent=s;}
+
+async function renderTbl(k){
+  const bids={txn:'txnB',inv:'invB',fx:'fxB',co:'coB',asset:'assetB'};
+  document.getElementById(bids[k]).innerHTML=skRows(5,cc(k));
+  try{
+    const ak=k==='co'?'contact':k;
+    await fetchAll(ak);
+    if(['txn','inv','fx'].includes(ak)){await fetchAll('contact');if(ak==='txn')await fetchAll('inv');}
+    popCos();af(k);
+  }catch(e){toast('Load error: '+e.message,'error');}
+}
+function cc(k){return{txn:10,inv:12,fx:10,co:9,asset:10}[k]||6;}
+
+function af(k){
+  const ak=k==='co'?'contact':k;let recs=[...C[ak]];const f=fs[k]||{};
+  if(f.q){const q=f.q.toLowerCase();recs=recs.filter(r=>JSON.stringify(Object.values(r.fields)).toLowerCase().includes(q));}
+  if(k==='txn'){if(f.st)recs=recs.filter(r=>r.fields['Entry Status']===f.st);if(f.ty)recs=recs.filter(r=>r.fields.Type===f.ty);const{f:fr,t:to}=gdr(f.rng||'all','tfrom','tto');recs=recs.filter(r=>inR(r.fields.Date,fr,to));}
+  if(k==='inv'&&f.st)recs=recs.filter(r=>r.fields['Warehouse Status']===f.st);
+  if(k==='co'&&f.ty){recs=recs.filter(r=>{const ty=r.fields.Type;if(!ty)return false;if(Array.isArray(ty))return ty.some(t=>(typeof t==='object'?t.name:t)===f.ty);return(typeof ty==='object'?ty.name:ty)===f.ty;});}
+  rr(k,recs);
+}
+
+function rr(k,recs){
+  const bids={txn:'txnB',inv:'invB',fx:'fxB',co:'coB',asset:'assetB'};
+  const iids={txn:'txnI',inv:'invI',fx:'fxI',co:'coI',asset:'assetI'};
+  const body=document.getElementById(bids[k]);const info=document.getElementById(iids[k]);
+  if(info)info.textContent=recs.length+' record'+(recs.length!==1?'s':'');
+  if(!recs.length){body.innerHTML=`<tr><td colspan="${cc(k)}"><div class="es"><div class="ei">◌</div><div class="etit">No records found</div><div class="esub">Add your first entry using the button above</div></div></td></tr>`;return;}
+  const cm=cmap();
+  if(k==='txn'){body.innerHTML=recs.map(r=>{const f=r.fields;const cp=f['Counterparty (Linked)']?cm[f['Counterparty (Linked)'][0]]||'—':'—';const ce=role==='owner'||f['Entry Status']!=='Approved';
+    return`<tr><td class="mn" style="cursor:pointer" onclick="openDet('txn','${r.id}')">${f['TXN ID']||'—'}</td><td class="mn">${f.Date||'—'}</td><td>${f.Type?`<span class="badge ${f.Type==='Income'?'bi':'be'}">${f.Type}</span>`:'—'}</td><td>${f.Category||'—'}</td><td class="pri" style="cursor:pointer" onclick="openDet('txn','${r.id}')">${(f.Description||'—').slice(0,26)}</td><td>${cp}</td><td class="${f.Type==='Income'?'pos':'neg'}">${f['Amount (USD)']!=null?fu(f['Amount (USD)']):'—'}</td><td>${f['Payment Status']||'—'}</td><td>${sb(f['Entry Status'])}</td><td><div class="ras">${ce?`<button class="ra" onclick="editR('txn','${r.id}')">Edit</button>`:''} ${role==='owner'&&f['Entry Status']!=='Approved'?`<button class="appbtn" style="padding:3px 8px;font-size:11px" onclick="approveR('${r.id}')">✓</button>`:''}</div></td></tr>`;}).join('');}
+  else if(k==='inv'){body.innerHTML=recs.map(r=>{const f=r.fields;const sp=f['Supplier (Linked)']?cm[f['Supplier (Linked)'][0]]||'—':'—';const b=f['MT Balance']!=null?f['MT Balance']:(f['MT Qty']||0);
+    return`<tr><td class="mn">${f['Lot ID']||'—'}</td><td class="mn">${f['Date In']||'—'}</td><td class="mn">${f['Date Out']||'—'}</td><td class="pri">${sp}</td><td>${f['Origin Country']||'—'}</td><td>${f.Grade||'—'}</td><td class="mn">${(f['MT Qty']||0).toFixed(2)}</td><td class="mn">${b.toFixed(2)}</td><td class="mn">${f['Cost/MT (USD)']!=null?fu(f['Cost/MT (USD)']):'—'}</td><td>${f['Quality Overall']?`<span class="badge bn">${f['Quality Overall']}</span>`:'—'}</td><td>${wb(f['Warehouse Status'])}</td><td><div class="ras"><button class="ra" onclick="openDet('inv','${r.id}')">View</button><button class="ra" onclick="editR('inv','${r.id}')">Edit</button></div></td></tr>`;}).join('');}
+  else if(k==='fx'){body.innerHTML=recs.map(r=>{const f=r.fields;const cp=f['Counterparty (Linked)']?cm[f['Counterparty (Linked)'][0]]||'—':'—';
+    return`<tr><td class="mn">${f['Conv ID']||'—'}</td><td class="mn">${f.Date||'—'}</td><td>${f['From Currency']||'—'}</td><td class="mn">${f['Amount From']!=null?fc(f['Amount From'],f['From Currency']):'—'}</td><td>${f['To Currency']||'—'}</td><td class="mn">${f['Amount To']!=null?fc(f['Amount To'],f['To Currency']):'—'}</td><td class="mn">${f['FX Rate']?f['FX Rate'].toFixed(4):'—'}</td><td>${cp}</td><td>${(f['Reference / Purpose']||'—').slice(0,24)}</td><td><div class="ras"><button class="ra" onclick="editR('fx','${r.id}')">Edit</button></div></td></tr>`;}).join('');}
+  else if(k==='co'){body.innerHTML=recs.map(r=>{const f=r.fields;const ty=Array.isArray(f.Type)?f.Type.map(t=>typeof t==='object'?t.name:t).join(', '):(f.Type||'—');const ce=role==='owner';
+    return`<tr><td class="pri">${f['Contact Name']||'—'}</td><td>${ty}</td><td>${f.Country||'—'}</td><td>${f['Contact Person']||'—'}</td><td>${f.Email||'—'}</td><td>${f.Phone||'—'}</td><td>${f.Currency||'—'}</td><td>${f.Active?'<span class="badge bact">Active</span>':'<span class="badge bn">Inactive</span>'}</td><td><div class="ras">${ce?`<button class="ra" onclick="editR('contact','${r.id}')">Edit</button>`:''}</div></td></tr>`;}).join('');}
+  else if(k==='asset'){body.innerHTML=recs.map(r=>{const f=r.fields;
+    return`<tr><td class="mn">${f['Asset ID']||'—'}</td><td class="pri">${f['Asset Name']||'—'}</td><td>${f.Category||'—'}</td><td class="mn">${f['Date Acquired']||'—'}</td><td class="mn">${f['Original Value']!=null?f['Original Value'].toLocaleString():'-'} ${f.Currency||''}</td><td class="mn">${f['Approx Value (USD)']!=null?fu(f['Approx Value (USD)']):'—'}</td><td class="mn">${f['Current Value (USD)']!=null?fu(f['Current Value (USD)']):'—'}</td><td class="mn">${f['Depreciation % p.a.']!=null?(f['Depreciation % p.a.']*100).toFixed(1)+'%':'—'}</td><td>${f['Current Status']?`<span class="badge bn">${f['Current Status']}</span>`:'—'}</td><td><div class="ras"><button class="ra" onclick="editR('asset','${r.id}')">Edit</button></div></td></tr>`;}).join('');}
+}
+
+function openDet(k,id){
+  const ak=k==='co'?'contact':k;const r=C[ak].find(x=>x.id===id);if(!r)return;
+  const f=r.fields;const cm=cmap();
+  const TTS={txn:'Transaction',inv:'Inventory Lot',fx:'FX Conversion',co:'Contact',contact:'Contact',asset:'Asset'};
+  document.getElementById('detTit').textContent=(TTS[k]||k)+' Detail';
+  document.getElementById('detEdit').onclick=()=>{closeM('detail');editR(k,id);};
+  let rows=[];
+  if(k==='txn')rows=[['TXN ID',f['TXN ID']||'—'],['Date',f.Date||'—'],['Type',f.Type?`<span class="badge ${f.Type==='Income'?'bi':'be'}">${f.Type}</span>`:'—'],['Category',f.Category||'—'],['Status',sb(f['Entry Status'])],['Payment Status',f['Payment Status']||'—'],['Payment Method',f['Payment Method']||'—'],['Counterparty',f['Counterparty (Linked)']?cm[f['Counterparty (Linked)'][0]]||'—':'—'],['Amount',f.Amount!=null?f.Amount+' '+(f.Currency||''):'—'],['Amount (USD)',f['Amount (USD)']!=null?fu(f['Amount (USD)']):'—'],['Tax Type',f['Tax Type']||'—'],['Tax Amount (USD)',f['Tax Amount (USD)']!=null?fu(f['Tax Amount (USD)']):'—'],['Description',f.Description||'—'],['Notes',f.Notes||'—']];
+  else if(k==='inv'){const b=f['MT Balance']!=null?f['MT Balance']:(f['MT Qty']||0);rows=[['Lot ID',f['Lot ID']||'—'],['Date In',f['Date In']||'—'],['Date Out',f['Date Out']||'—'],['Supplier',f['Supplier (Linked)']?cm[f['Supplier (Linked)'][0]]||'—':'—'],['Origin Country',f['Origin Country']||'—'],['Grade',f.Grade||'—'],['Storage Location',f['Storage Location']||'—'],['Warehouse Status',wb(f['Warehouse Status'])],['MT Qty',(f['MT Qty']||0).toFixed(3)],['MT Shipped',(f['MT Shipped']||0).toFixed(3)],['MT Balance',b.toFixed(3)],['Cost/MT (Original)',f['Cost/MT (Original)']!=null?f['Cost/MT (Original)'].toLocaleString():'—'],['Cost Currency',f['Cost Currency']||'—'],['Cost/MT (USD)',f['Cost/MT (USD)']!=null?fu(f['Cost/MT (USD)']):'—'],['Total Cost (USD)',f['Total Cost (USD)']!=null?fu(f['Total Cost (USD)']):'—'],['Moisture %',f['Moisture %']!=null?(f['Moisture %']*100).toFixed(2)+'%':'—'],['Outturn lbs/80kg',f['Outturn lbs/80kg']||'—'],['Nut Count /kg',f['Nut Count /kg']||'—'],['Foreign Matter %',f['Foreign Matter %']!=null?(f['Foreign Matter %']*100).toFixed(2)+'%':'—'],['Defective %',f['Defective %']!=null?(f['Defective %']*100).toFixed(2)+'%':'—'],['Quality Overall',f['Quality Overall']||'—'],['Notes',f.Notes||'—']];}
+  else if(k==='fx')rows=[['Conv ID',f['Conv ID']||'—'],['Date',f.Date||'—'],['Counterparty',f['Counterparty (Linked)']?cm[f['Counterparty (Linked)'][0]]||'—':'—'],['From Currency',f['From Currency']||'—'],['Amount From',f['Amount From']!=null?fc(f['Amount From'],f['From Currency']):'—'],['To Currency',f['To Currency']||'—'],['Amount To',f['Amount To']!=null?fc(f['Amount To'],f['To Currency']):'—'],['FX Rate',f['FX Rate']!=null?f['FX Rate'].toFixed(6):'—'],['Purpose',f['Reference / Purpose']||'—']];
+  else if(k==='contact'){const ty=Array.isArray(f.Type)?f.Type.map(t=>typeof t==='object'?t.name:t).join(', '):(f.Type||'—');rows=[['Name',f['Contact Name']||'—'],['Type',ty],['Country',f.Country||'—'],['Contact Person',f['Contact Person']||'—'],['Phone',f.Phone||'—'],['Email',f.Email||'—'],['Currency',f.Currency||'—'],['Payment Terms',f['Payment Terms']||'—'],['Active',f.Active?'<span class="badge bact">Active</span>':'<span class="badge bn">Inactive</span>'],['Bank Details',f['Bank Details']||'—'],['Notes',f.Notes||'—']];}
+  else if(k==='asset')rows=[['Asset ID',f['Asset ID']||'—'],['Asset Name',f['Asset Name']||'—'],['Category',f.Category||'—'],['Date Acquired',f['Date Acquired']||'—'],['Current Status',f['Current Status']||'—'],['Original Value',f['Original Value']!=null?f['Original Value'].toLocaleString()+' '+(f.Currency||''):'—'],['Approx Value (USD)',f['Approx Value (USD)']!=null?fu(f['Approx Value (USD)']):'—'],['Current Value (USD)',f['Current Value (USD)']!=null?fu(f['Current Value (USD)']):'—'],['Depreciation % p.a.',f['Depreciation % p.a.']!=null?(f['Depreciation % p.a.']*100).toFixed(1)+'%':'—'],['Disposal Date',f['Disposal Date']||'—'],['Notes',f.Notes||'—']];
+  document.getElementById('detBody').innerHTML='<div class="dl">'+rows.map(([l,v])=>`<div class="dlr"><div class="dll">${l}</div><div class="dlv">${v}</div></div>`).join('')+'</div>';
+  document.getElementById('modal-detail').classList.add('open');
+}
+
+function openM(k){
+  clearF(k);eId[k==='co'?'contact':k]=null;
+  const names={txn:'New Transaction',inv:'New Inventory Lot',fx:'New FX Conversion',contact:'New Contact',asset:'New Asset'};
+  const titEl=document.getElementById(k==='co'?'coTit':k+'Tit');if(titEl)titEl.textContent=names[k]||names['contact'];
+  const dMap={txn:'delTxn',inv:'delInv',fx:'delFx',contact:'delCo',asset:'delAsset'};const db=document.getElementById(dMap[k]);if(db)db.style.display='none';
+  if(k==='txn'){document.getElementById('txn_date').value=td();document.getElementById('txn_status').value='Draft';document.getElementById('statusFld').style.display=role==='owner'?'':'none';}
+  if(k==='inv')document.getElementById('inv_di').value=td();
+  if(k==='fx')document.getElementById('fx_date').value=td();
+  if(k==='contact')document.getElementById('co_active').checked=true;
+  document.getElementById('modal-'+k).classList.add('open');
+}
+function closeM(k){document.getElementById('modal-'+k).classList.remove('open');eId[k==='co'?'contact':k]=null;}
+function clearF(k){document.querySelectorAll('#modal-'+k+' input:not([type=checkbox]),#modal-'+k+' select:not([multiple]),#modal-'+k+' textarea').forEach(el=>el.value='');document.querySelectorAll('#modal-'+k+' .fld.err').forEach(el=>el.classList.remove('err'));}
+
+function editR(k,id){
+  const ak=k==='co'?'contact':k;const r=C[ak].find(x=>x.id===id);if(!r)return;
+  openM(k==='co'?'contact':k);eId[ak]=id;
+  const f=r.fields;
+  const names={txn:'Edit Transaction',inv:'Edit Lot',fx:'Edit Conversion',contact:'Edit Contact',asset:'Edit Asset'};
+  const titEl=document.getElementById(k==='co'?'coTit':ak+'Tit');if(titEl)titEl.textContent=names[ak]||'Edit';
+  const dMap={txn:'delTxn',inv:'delInv',fx:'delFx',contact:'delCo',asset:'delAsset'};const db=document.getElementById(dMap[ak]);if(db)db.style.display='';
+  const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+  if(ak==='txn'){sv('txn_date',f.Date);sv('txn_type',f.Type);sv('txn_cat',f.Category);sv('txn_desc',f.Description);sv('txn_amt',f.Amount);sv('txn_cur',f.Currency);sv('txn_usd',f['Amount (USD)']);sv('txn_pm',f['Payment Method']);sv('txn_pst',f['Payment Status']);sv('txn_tt',f['Tax Type']);sv('txn_ta',f['Tax Amount (USD)']);sv('txn_notes',f.Notes);sv('txn_status',f['Entry Status']||'Draft');if(f['Counterparty (Linked)']?.[0])document.getElementById('txn_cp').value=f['Counterparty (Linked)'][0];if(f['Inventory']?.[0])document.getElementById('txn_inv').value=f['Inventory'][0];document.getElementById('statusFld').style.display=role==='owner'?'':'none';}
+  else if(ak==='inv'){sv('inv_di',f['Date In']);sv('inv_do',f['Date Out']);sv('inv_ori',f['Origin Country']);sv('inv_gr',f.Grade);sv('inv_sl',f['Storage Location']);sv('inv_ws',f['Warehouse Status']);sv('inv_qty',f['MT Qty']);sv('inv_cmo',f['Cost/MT (Original)']);sv('inv_cc',f['Cost Currency']);sv('inv_cmu',f['Cost/MT (USD)']);sv('inv_tc',f['Total Cost (USD)']);sv('inv_mts',f['MT Shipped']);if(f['Moisture %']!=null)sv('inv_moi',(f['Moisture %']*100).toFixed(2));sv('inv_out',f['Outturn lbs/80kg']);sv('inv_nc',f['Nut Count /kg']);if(f['Foreign Matter %']!=null)sv('inv_fm',(f['Foreign Matter %']*100).toFixed(2));if(f['Defective %']!=null)sv('inv_def',(f['Defective %']*100).toFixed(2));sv('inv_qo',f['Quality Overall']);sv('inv_notes',f.Notes);if(f['Supplier (Linked)']?.[0])document.getElementById('inv_sup').value=f['Supplier (Linked)'][0];}
+  else if(ak==='fx'){sv('fx_date',f.Date);sv('fx_fc',f['From Currency']);sv('fx_af',f['Amount From']);sv('fx_tc',f['To Currency']);sv('fx_at',f['Amount To']);sv('fx_rate',f['FX Rate']);sv('fx_ref',f['Reference / Purpose']);if(f['Counterparty (Linked)']?.[0])document.getElementById('fx_cp').value=f['Counterparty (Linked)'][0];}
+  else if(ak==='contact'){sv('co_name',f['Contact Name']);sv('co_country',f.Country);sv('co_person',f['Contact Person']);sv('co_phone',f.Phone);sv('co_email',f.Email);sv('co_cur',f.Currency);sv('co_pt',f['Payment Terms']);sv('co_bank',f['Bank Details']);sv('co_notes',f.Notes);document.getElementById('co_active').checked=!!f.Active;}
+  else if(ak==='asset'){sv('asset_name',f['Asset Name']);sv('asset_cat',f.Category);sv('asset_da',f['Date Acquired']);sv('asset_ov',f['Original Value']);sv('asset_cur',f.Currency);sv('asset_usd',f['Approx Value (USD)']);if(f['Depreciation % p.a.']!=null)sv('asset_dep',(f['Depreciation % p.a.']*100).toFixed(2));sv('asset_st',f['Current Status']);sv('asset_notes',f.Notes);sv('asset_dd',f['Disposal Date']);}
+}
+
+function vld(k){
+  let ok=true;document.querySelectorAll('#modal-'+k+' .fld.err').forEach(el=>el.classList.remove('err'));
+  (REQ[k]||[]).forEach((fid,i)=>{const el=document.getElementById(fid);const wr=document.getElementById(FIDS[k]?.[i]);if(el&&!el.value.trim()){if(wr)wr.classList.add('err');ok=false;}});
+  if(!ok)toast('Please fill in all required fields','error');return ok;
+}
+
+async function save(k){
+  if(!vld(k))return;
+  const ak=k==='co'?'contact':k;
+  const btns=document.querySelectorAll('#modal-'+k+' .mfr .bp');btns.forEach(b=>{b.textContent='Saving…';b.disabled=true;});
+  try{
+    const flds=bldF(k);const id=eId[ak];
+    if(id){await api(TBL[ak]+'/'+id,'PATCH',{fields:flds});toast('Record updated','success');}
+    else{await api(TBL[ak],'POST',{records:[{fields:flds}]});toast('Record saved','success');}
+    closeM(k);C[ak]=[];
+    await fetchAll(ak);
+    if(['txn','inv','fx'].includes(ak)){await fetchAll('contact');if(ak==='txn')await fetchAll('inv');}
+    popCos();af(k==='contact'?'co':k);upPB();
+    if(curPg()==='dashboard')renderDash();
+  }catch(e){toast('Save failed: '+e.message,'error');}
+  const lbMap={txn:'Save Transaction',inv:'Save Lot',fx:'Save Conversion',contact:'Save Contact',asset:'Save Asset'};
+  btns.forEach(b=>{b.textContent=lbMap[ak]||'Save';b.disabled=false;});
+}
+
+function gv(id){const el=document.getElementById(id);return el?el.value:'';}
+function gn(id){const v=gv(id);return v!==''?parseFloat(v):undefined;}
+function bldF(k){
+  const ak=k==='co'?'contact':k;const f={};
+  if(ak==='txn'){if(gv('txn_date'))f.Date=gv('txn_date');if(gv('txn_type'))f.Type=gv('txn_type');if(gv('txn_cat'))f.Category=gv('txn_cat');if(gv('txn_desc'))f.Description=gv('txn_desc');if(gn('txn_amt')!==undefined)f.Amount=gn('txn_amt');if(gv('txn_cur'))f.Currency=gv('txn_cur');if(gn('txn_usd')!==undefined)f['Amount (USD)']=gn('txn_usd');if(gv('txn_pm'))f['Payment Method']=gv('txn_pm');if(gv('txn_pst'))f['Payment Status']=gv('txn_pst');if(gv('txn_tt'))f['Tax Type']=gv('txn_tt');if(gn('txn_ta')!==undefined)f['Tax Amount (USD)']=gn('txn_ta');if(gv('txn_notes'))f.Notes=gv('txn_notes');f['Entry Status']=role==='owner'?(gv('txn_status')||'Draft'):'Draft';const cp=gv('txn_cp');if(cp)f['Counterparty (Linked)']=[cp];const inv=gv('txn_inv');if(inv)f['Inventory']=[inv];}
+  else if(ak==='inv'){if(gv('inv_di'))f['Date In']=gv('inv_di');if(gv('inv_do'))f['Date Out']=gv('inv_do');if(gv('inv_ori'))f['Origin Country']=gv('inv_ori');if(gv('inv_gr'))f.Grade=gv('inv_gr');if(gv('inv_sl'))f['Storage Location']=gv('inv_sl');if(gv('inv_ws'))f['Warehouse Status']=gv('inv_ws');if(gn('inv_qty')!==undefined)f['MT Qty']=gn('inv_qty');if(gn('inv_cmo')!==undefined)f['Cost/MT (Original)']=gn('inv_cmo');if(gv('inv_cc'))f['Cost Currency']=gv('inv_cc');if(gn('inv_cmu')!==undefined)f['Cost/MT (USD)']=gn('inv_cmu');if(gn('inv_tc')!==undefined)f['Total Cost (USD)']=gn('inv_tc');if(gn('inv_mts')!==undefined)f['MT Shipped']=gn('inv_mts');const m=gn('inv_moi');if(m!==undefined)f['Moisture %']=m/100;if(gn('inv_out')!==undefined)f['Outturn lbs/80kg']=gn('inv_out');if(gn('inv_nc')!==undefined)f['Nut Count /kg']=gn('inv_nc');const fm=gn('inv_fm');if(fm!==undefined)f['Foreign Matter %']=fm/100;const df=gn('inv_def');if(df!==undefined)f['Defective %']=df/100;if(gv('inv_qo'))f['Quality Overall']=gv('inv_qo');if(gv('inv_notes'))f.Notes=gv('inv_notes');const sp=gv('inv_sup');if(sp)f['Supplier (Linked)']=[sp];}
+  else if(ak==='fx'){if(gv('fx_date'))f.Date=gv('fx_date');if(gv('fx_fc'))f['From Currency']=gv('fx_fc');if(gn('fx_af')!==undefined)f['Amount From']=gn('fx_af');if(gv('fx_tc'))f['To Currency']=gv('fx_tc');if(gn('fx_at')!==undefined)f['Amount To']=gn('fx_at');if(gn('fx_rate')!==undefined)f['FX Rate']=gn('fx_rate');if(gv('fx_ref'))f['Reference / Purpose']=gv('fx_ref');const cp=gv('fx_cp');if(cp)f['Counterparty (Linked)']=[cp];}
+  else if(ak==='contact'){f['Contact Name']=gv('co_name');if(gv('co_country'))f.Country=gv('co_country');if(gv('co_person'))f['Contact Person']=gv('co_person');if(gv('co_phone'))f.Phone=gv('co_phone');if(gv('co_email'))f.Email=gv('co_email');if(gv('co_cur'))f.Currency=gv('co_cur');if(gv('co_pt'))f['Payment Terms']=gv('co_pt');if(gv('co_bank'))f['Bank Details']=gv('co_bank');if(gv('co_notes'))f.Notes=gv('co_notes');f.Active=document.getElementById('co_active').checked;}
+  else if(ak==='asset'){f['Asset Name']=gv('asset_name');if(gv('asset_cat'))f.Category=gv('asset_cat');if(gv('asset_da'))f['Date Acquired']=gv('asset_da');if(gn('asset_ov')!==undefined)f['Original Value']=gn('asset_ov');if(gv('asset_cur'))f.Currency=gv('asset_cur');if(gn('asset_usd')!==undefined)f['Approx Value (USD)']=gn('asset_usd');const dep=gn('asset_dep');if(dep!==undefined)f['Depreciation % p.a.']=dep/100;if(gv('asset_st'))f['Current Status']=gv('asset_st');if(gv('asset_notes'))f.Notes=gv('asset_notes');if(gv('asset_dd'))f['Disposal Date']=gv('asset_dd');}
+  return f;
+}
+
+async function approveR(id){try{await api(TBL.txn+'/'+id,'PATCH',{fields:{'Entry Status':'Approved'}});toast('Transaction approved','success');C.txn=[];await fetchAll('txn');af('txn');upPB();if(curPg()==='dashboard')renderDash();}catch(e){toast('Approve failed: '+e.message,'error');}}
+function confirmDel(k){const ak=k==='co'?'contact':k;dp={k:ak,id:eId[ak]};document.getElementById('modal-confirm').classList.add('open');}
+function execDel(){const{k,id}=dp;if(!k||!id)return;closeM('confirm');api(TBL[k]+'/'+id,'DELETE').then(()=>{toast('Record deleted','success');closeM(k);C[k]=C[k].filter(r=>r.id!==id);af(k==='contact'?'co':k);if(curPg()==='dashboard')renderDash();upPB();}).catch(e=>toast('Delete failed: '+e.message,'error'));}
+function upPB(){const p=C.txn.filter(r=>r.fields['Entry Status']==='Draft'||r.fields['Entry Status']==='Submitted');const b=document.getElementById('pBadge');if(b){b.textContent=p.length;b.style.display=p.length>0?'':'none';}}
+function fu(n){return'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fc(n,cur){const syms={USD:'$',EUR:'€',GBP:'£'};const s=syms[cur];const opts=s?{minimumFractionDigits:2,maximumFractionDigits:2}:{minimumFractionDigits:0,maximumFractionDigits:0};return s?s+Number(n).toLocaleString('en-US',opts):Number(n).toLocaleString('en-US',opts)+' '+(cur||'');}
+function td(){return new Date().toISOString().slice(0,10);}
+function er(c,m){return`<tr><td colspan="${c}" style="text-align:center;padding:24px;color:var(--t3);font-size:12px">${m}</td></tr>`;}
+function skRows(n,c){return Array(n).fill(`<tr>${Array(c).fill(`<td><div class="sk" style="height:12px;width:${60+Math.random()*30}%"></div></td>`).join('')}</tr>`).join('');}
+function sb(s){if(!s)return'<span class="badge bn">—</span>';const cls={Draft:'bd',Submitted:'bs',Approved:'ba'}[s]||'bn';return`<span class="badge ${cls}">${s}</span>`;}
+function wb(s){if(!s)return'—';const cls={'In Warehouse':'bw','Shipped':'bsh','Processing':'bp2'}[s]||'bn';return`<span class="badge ${cls}">${s}</span>`;}
+function toast(msg,type='success'){const c=document.getElementById('tst');const t=document.createElement('div');t.className='t '+type;t.innerHTML='<span>'+(type==='success'?'✓':'✕')+'</span> '+msg;c.appendChild(t);setTimeout(()=>t.remove(),3500);}
+function toggleSB(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbo').classList.toggle('open');}
+function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbo').classList.remove('open');}
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o){const k=o.id.replace('modal-','');if(k==='confirm')closeM('confirm');else closeM(k);}}));
+
+async function initApp(){
+  if(appInited)return;appInited=true;
+  try{await Promise.all([loadSch(),fetchAll('contact'),fetchAll('inv')]);popCos();renderDash();}
+  catch(e){toast('Init error: '+e.message,'error');}
+}
+</script>
+</body>
+</html>
